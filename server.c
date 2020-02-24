@@ -6,10 +6,26 @@
 # include <sys/socket.h>
 # include <sys/types.h>
 # include <netinet/in.h>
+# include <dirent.h>
+# include <limits.h>
 
 # define PORT 12345
 
 int main(int argc, char** argv){
+    {
+        DIR *folder;
+        struct dirent *entry;
+        char cwd[PATH_MAX];
+        getcwd(cwd, sizeof(cwd));
+        printf("%s\n", cwd);
+        strcat(cwd, "/data");
+        folder = opendir(cwd);
+            
+        while(entry = readdir(folder)){
+            printf("%s\n", entry->d_name);
+        }
+        closedir(folder);
+    }
 	int sd=socket(AF_INET,SOCK_STREAM,0);
 	int client_sd;
 	struct sockaddr_in server_addr;
@@ -45,6 +61,20 @@ int main(int argc, char** argv){
 			close(client_sd);
 			break;
 		}
+		// if the command is "list", list the file(s) under "data"
+		if(strcmp("list",buff) == 0){
+            DIR *folder;
+            struct dirent *entry;
+            char cwd[PATH_MAX];
+            getcwd(cwd, sizeof(cwd));
+            strcat(cwd, "/data");
+            folder = opendir(cwd);
+            
+            while(entry = readdir(folder)){
+                printf("%s\n", entry->d_name);
+            }
+            closedir(folder);
+        }
 	}
 	close(sd);
 	return 0;
