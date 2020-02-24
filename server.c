@@ -9,23 +9,14 @@
 # include <dirent.h>
 # include <limits.h>
 
-# define PORT 12345
+//# define PORT 12345
 
 int main(int argc, char** argv){
-    {
-        DIR *folder;
-        struct dirent *entry;
-        char cwd[PATH_MAX];
-        getcwd(cwd, sizeof(cwd));
-        printf("%s\n", cwd);
-        strcat(cwd, "/data");
-        folder = opendir(cwd);
-            
-        while(entry = readdir(folder)){
-            printf("%s\n", entry->d_name);
-        }
-        closedir(folder);
+    if(argc == 1){
+        printf("You did not enter port number.\n");
+        exit(0);
     }
+    unsigned short port = atoi(argv[1]);
 	int sd=socket(AF_INET,SOCK_STREAM,0);
 	int client_sd;
 	struct sockaddr_in server_addr;
@@ -33,7 +24,7 @@ int main(int argc, char** argv){
 	memset(&server_addr,0,sizeof(server_addr));
 	server_addr.sin_family=AF_INET;
 	server_addr.sin_addr.s_addr=htonl(INADDR_ANY);
-	server_addr.sin_port=htons(PORT);
+	server_addr.sin_port=htons(port);
 	if(bind(sd,(struct sockaddr *) &server_addr,sizeof(server_addr))<0){
 		printf("bind error: %s (Errno:%d)\n",strerror(errno),errno);
 		exit(0);
@@ -42,7 +33,7 @@ int main(int argc, char** argv){
 		printf("listen error: %s (Errno:%d)\n",strerror(errno),errno);
 		exit(0);
 	}
-	int addr_len=sizeof(client_addr);
+	unsigned int addr_len=sizeof(client_addr);
 	if((client_sd=accept(sd,(struct sockaddr *) &client_addr,&addr_len))<0){
 		printf("accept erro: %s (Errno:%d)\n",strerror(errno),errno);
 		exit(0);
@@ -70,7 +61,7 @@ int main(int argc, char** argv){
             strcat(cwd, "/data");
             folder = opendir(cwd);
             
-            while(entry = readdir(folder)){
+            while((entry = readdir(folder)) != NULL){
                 printf("%s\n", entry->d_name);
             }
             closedir(folder);
