@@ -1,16 +1,19 @@
 // client side
-
+// if the command is "list"
 if(strcmp(buff,"list") == 0){
     char state[2];
     recv(sd,state,2,0);
     state[1] = '\0';
+    // if the state send from server is not error
     while(strcmp("1",state) == 0){
         char name[PATH_MAX];
         recv(sd,state,2,0);
+        // if the state is error or no more data is sent from server, escape the loops
         if(strcmp("1",state) != 0){
             break;
         }
         recv(sd,name, sizeof(name),0);
+        // print the file name
         printf("%s\n",name);
     }   
 } 
@@ -24,6 +27,7 @@ if(strcmp("list",buff) == 0){
     getcwd(cwd, sizeof(cwd));
     strcat(cwd, "/data");
     folder = opendir(cwd);
+    // state "1" means everything is ok
     char state[2];
     state[0] = '1';
     state[1] = '\0';
@@ -33,9 +37,12 @@ if(strcmp("list",buff) == 0){
     while((entry = readdir(folder)) != NULL){
         char l_file[PATH_MAX];
         send(client_sd,state,2,0);
+        // Get the file name.
         strcpy(l_file, entry->d_name);
         send(client_sd, l_file, sizeof(l_file),0);
     }
+    // While there is no more file, send state "0" to client meaning that
+    // there is no more files.
     state[0] = '0';
     send(client_sd,state,2,0);
     closedir(folder);
