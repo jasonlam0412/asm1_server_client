@@ -11,6 +11,7 @@
 #include "myftp.h"
 
 
+
 P_message *list_request(){
 	P_message *p_message = (P_message *)malloc(sizeof(P_message));
 	stpcpy(p_message->protocol, "myftp");
@@ -75,4 +76,12 @@ P_message *file_data(char *filename, int filelength){
 	p_message->length = 0 + filelength;
 	strcpy(p_message->payload,filename);
 	return p_message;
+}
+
+void print_debug(P_message *p_message){
+	printf("protocol : %s\n",p_message->protocol);
+	printf("type     : %u\n",p_message->type);
+	printf("length   : %d\n",p_message->length);
+	printf("payload  : %s\n",p_message->payload);
+	printf("------------------------------------------\n");
 }
