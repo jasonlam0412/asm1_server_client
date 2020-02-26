@@ -160,7 +160,8 @@ void send_list(int client_sd){
 	free(REPLY);
 }
 
-void client_action(int client_sd){
+void client_action(int sd){
+	int client_sd = sd;
 	char filename[] = "fuck.txt";
 	int filelen = 9;
 	int len;

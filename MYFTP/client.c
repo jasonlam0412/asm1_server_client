@@ -16,16 +16,15 @@ char Ip[15];
 
 void recv_file(int sd){
 	P_message *FILE_DATA = (P_message *) malloc(sizeof(P_message));
-	char buf[1024];
-	int len;
 	FILE_DATA = file_data();
-	char file_request[60];
-	FILE *fp = fopen(file_request, "wb");
-	int numbytes;
+	int len;
 	if((len=recv(sd,FILE_DATA,sizeof(*FILE_DATA),0))<0){
 		printf("Send Error: %s (Errno:%d)\n",strerror(errno),errno);
 		exit(0);
 	}
+	FILE *fp = fopen(FILE_DATA->payload, "wb");
+	int numbytes;
+	char buf[1024];
 	print_debug(FILE_DATA);
 	int fileSize = FILE_DATA->length;
 	do{
@@ -110,29 +109,8 @@ int main(int argc, char** argv){
 		}
 		
 		if(GET_REQUEST->type == 0xB2){  /////            file exist
-			P_message *FILE_DATA = file_data();
-			if((len=recv(sd,FILE_DATA,sizeof(*FILE_DATA),0))<0){
-				printf("Send Error: %s (Errno:%d)\n",strerror(errno),errno);
-				exit(0);
-			}
-			FILE *fp = fopen(file_request, "wb");
-			int numbytes;
 			
-			print_debug(FILE_DATA);
-			int fileSize = FILE_DATA->length;
-			do{
-				numbytes = read(sd, buf, sizeof(buf));
-				printf("%d\n", sizeof(buf));
-				printf("read %d bytes, ", numbytes);
-				if(numbytes == 0){
-					//break;
-				}
-				numbytes = fwrite(buf, sizeof(char), numbytes, fp);
-				printf("fwrite %d bytesn", numbytes);
-				fileSize -= sizeof(buf);
-			}while(fileSize>0);
-			
-			fclose(fp);
+			recv_file(sd);
 			
 		}else if(GET_REQUEST->type == 0xB3){ ////////////    file not found
 			printf("File not found\n");
