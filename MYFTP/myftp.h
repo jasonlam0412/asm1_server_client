@@ -12,5 +12,5 @@ P_message *get_request(char *filename, int filelength);
 P_message *get_reply(int exist);
 P_message *put_request(char *filename, int filelength);
 P_message *put_reply();
-P_message *file_data(char *filename, int filelength);
+P_message *file_data();
 void print_debug(P_message *p_message);

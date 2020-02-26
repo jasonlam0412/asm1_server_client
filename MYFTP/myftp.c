@@ -69,18 +69,18 @@ P_message *put_reply(){
 	return p_message;
 }
 
-P_message *file_data(char *filename, int filelength){
+P_message *file_data(){
 	P_message *p_message = (P_message *)malloc(sizeof(P_message));
 	stpcpy(p_message->protocol, "myftp");
 	p_message->type = 0xFF;
-	p_message->length = 0 + filelength;
-	strcpy(p_message->payload,filename);
+	p_message->length = 0;
+	
 	return p_message;
 }
 
 void print_debug(P_message *p_message){
 	printf("protocol : %s\n",p_message->protocol);
-	printf("type     : %u\n",p_message->type);
+	printf("type     : %x\n",p_message->type);
 	printf("length   : %d\n",p_message->length);
 	printf("payload  : %s\n",p_message->payload);
 	printf("------------------------------------------\n");

@@ -13,9 +13,39 @@
 # define PORT 12345
 int portNum, sd;
 char Ip[15];
+
+void recv_file(int sd){
+	P_message *FILE_DATA = (P_message *) malloc(sizeof(P_message));
+	char buf[1024];
+	int len;
+	FILE_DATA = file_data();
+	char file_request[60];
+	FILE *fp = fopen(file_request, "wb");
+	int numbytes;
+	if((len=recv(sd,FILE_DATA,sizeof(*FILE_DATA),0))<0){
+		printf("Send Error: %s (Errno:%d)\n",strerror(errno),errno);
+		exit(0);
+	}
+	print_debug(FILE_DATA);
+	int fileSize = FILE_DATA->length;
+	do{
+		numbytes = read(sd, buf, sizeof(buf));
+		printf("%d\n", sizeof(buf));
+		printf("read %d bytes, ", numbytes);
+		if(numbytes == 0){
+			//break;
+		}
+		numbytes = fwrite(buf, sizeof(char), numbytes, fp);
+		printf("fwrite %d bytesn", numbytes);
+		fileSize -= sizeof(buf);
+	}while(fileSize>0);
+	free(FILE_DATA);
+	fclose(fp);
+}
+
 int main(int argc, char** argv){
 	int len;
-	
+	char buf[1024];
 	if(argc < 3 || argc > 5){
 		printf("Command error\n");
 		exit(0);
@@ -79,9 +109,38 @@ int main(int argc, char** argv){
 			exit(0);
 		}
 		
-		
+		if(GET_REQUEST->type == 0xB2){  /////            file exist
+			P_message *FILE_DATA = file_data();
+			if((len=recv(sd,FILE_DATA,sizeof(*FILE_DATA),0))<0){
+				printf("Send Error: %s (Errno:%d)\n",strerror(errno),errno);
+				exit(0);
+			}
+			FILE *fp = fopen(file_request, "wb");
+			int numbytes;
+			
+			print_debug(FILE_DATA);
+			int fileSize = FILE_DATA->length;
+			do{
+				numbytes = read(sd, buf, sizeof(buf));
+				printf("%d\n", sizeof(buf));
+				printf("read %d bytes, ", numbytes);
+				if(numbytes == 0){
+					//break;
+				}
+				numbytes = fwrite(buf, sizeof(char), numbytes, fp);
+				printf("fwrite %d bytesn", numbytes);
+				fileSize -= sizeof(buf);
+			}while(fileSize>0);
+			
+			fclose(fp);
+			
+		}else if(GET_REQUEST->type == 0xB3){ ////////////    file not found
+			printf("File not found\n");
+		}else{
+			printf("GET_REQUEST->type ERROR\n");
+		}
         print_debug(GET_REQUEST);
-	
+		
 	}else if(strcmp(argv[3],"put")==0){
 		char file_put[50];
 		if(argc > 4){
@@ -113,7 +172,7 @@ int main(int argc, char** argv){
 		printf("Only input list/get/put\n");
 		exit(0);
 	}
-	
+	//free(buf);
 	close(sd);
 	return 0;
 }
