@@ -4,6 +4,7 @@
 # include <string.h>
 # include <errno.h>
 # include <pthread.h>
+# include <dirent.h>
 # include <sys/socket.h>
 # include <sys/types.h>
 # include <netinet/in.h>
@@ -39,25 +40,74 @@ int main(int argc, char** argv){
 	
 	if(strcmp(argv[3],"list")==0){
 		P_message *LIST_REQUEST = list_request();
-		char message[] = {"Hi there"};
-		send(sd,message,sizeof(message),0);
+		//char message[] = {"Hi there"};
+		//send(sd,message,sizeof(message),0);
+        
+        print_debug(LIST_REQUEST);
+        
 		if((len=send(sd,LIST_REQUEST,sizeof(*LIST_REQUEST),0))<0){
 			printf("Send Error: %s (Errno:%d)\n",strerror(errno),errno);
 			exit(0);
-		}else{
-			printf("protocol:%s\n", LIST_REQUEST->protocol);
-			printf("type %x\n", LIST_REQUEST->type);
 		}
-		//printf("protocol:%s\n", LIST_REQUEST->protocol);
-		//printf("type %x\n", LIST_REQUEST->type);
-		/*if((len=recv(sd,(void*)LIST_REQUEST,sizeof(*LIST_REQUEST),0))<0){
+		
+		if((len=recv(sd,LIST_REQUEST,sizeof(*LIST_REQUEST),0))<0){
 			printf("Send Error: %s (Errno:%d)\n",strerror(errno),errno);
 			exit(0);
 		}
-		printf("Return type%c\n", LIST_REQUEST->type);*/
-	}else if(strcmp(argv[3],"get")==0){
 		
+		print_debug(LIST_REQUEST);
+		
+	}else if(strcmp(argv[3],"get")==0){
+		char file_request[50];
+		if(argc > 4){
+			strcpy(file_request, argv[4]);
+			printf("%s\n", file_request);
+			printf("%d\n", strlen(file_request));
+		}else{
+			printf("Please enter file name\n");
+		}
+		
+		P_message *GET_REQUEST = get_request(file_request, strlen(file_request));	
+		print_debug(GET_REQUEST);
+		if((len=send(sd,GET_REQUEST,sizeof(*GET_REQUEST),0))<0){
+			printf("Send Error: %s (Errno:%d)\n",strerror(errno),errno);
+			exit(0);
+		}
+		
+		if((len=recv(sd,GET_REQUEST,sizeof(*GET_REQUEST),0))<0){
+			printf("Send Error: %s (Errno:%d)\n",strerror(errno),errno);
+			exit(0);
+		}
+		
+		
+        print_debug(GET_REQUEST);
+	
 	}else if(strcmp(argv[3],"put")==0){
+		char file_put[50];
+		if(argc > 4){
+			strcpy(file_put, argv[4]);
+			printf("%s\n", file_put);
+			printf("%d\n", strlen(file_put));
+		}else{
+			printf("Please enter file name\n");
+		}
+		
+		P_message *PUT_REQUEST = put_request(file_put, strlen(file_put));	
+		
+		print_debug(PUT_REQUEST);
+		
+		if((len=send(sd,PUT_REQUEST,sizeof(*PUT_REQUEST),0))<0){
+			printf("Send Error: %s (Errno:%d)\n",strerror(errno),errno);
+			exit(0);
+		}
+		
+		if((len=recv(sd,PUT_REQUEST,sizeof(*PUT_REQUEST),0))<0){
+			printf("Send Error: %s (Errno:%d)\n",strerror(errno),errno);
+			exit(0);
+		}
+		
+		
+        print_debug(PUT_REQUEST);
 		
 	}else{
 		printf("Only input list/get/put\n");
@@ -67,4 +117,3 @@ int main(int argc, char** argv){
 	close(sd);
 	return 0;
 }
-
