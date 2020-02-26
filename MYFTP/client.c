@@ -3,16 +3,46 @@
 # include <unistd.h>
 # include <string.h>
 # include <errno.h>
-# include <pthread.h>
 # include <dirent.h>
+# include <pthread.h>
 # include <sys/socket.h>
 # include <sys/types.h>
+# include <sys/stat.h> 
 # include <netinet/in.h>
 # include <arpa/inet.h>
 #include "myftp.h"
 # define PORT 12345
+#define MAX 1000
 int portNum, sd;
 char Ip[15];
+void recv_file(int sd);
+void send_file(int sd);
+int list_compare(char *fileRequest);
+
+void send_file(int sd){
+	
+}
+
+int list_compare(char *fileRequest){
+	DIR *folder;
+	struct dirent *entry;
+	char cwd[PATH_MAX];
+	getcwd(cwd, sizeof(cwd));
+	strcat(cwd, "/.");
+	folder = opendir(cwd);
+	//char *filename = NULL;
+	int bingo = 0;
+	while((entry = readdir(folder)) != NULL){
+		if(strcmp(entry->d_name, fileRequest) == 0){
+			bingo =1;
+			break;
+		}
+		//printf("%s\n", entry->d_name);
+	}
+	
+	return bingo;
+	
+}
 
 void recv_file(int sd){
 	P_message *FILE_DATA = (P_message *) malloc(sizeof(P_message));
@@ -68,6 +98,12 @@ int main(int argc, char** argv){
 	//printf("%x\n",le);
 	
 	if(strcmp(argv[3],"list")==0){
+		if(argc == 4){
+			
+		}else{
+			printf("Input too more\n");
+			exit(0);
+		}
 		P_message *LIST_REQUEST = list_request();
 		//char message[] = {"Hi there"};
 		//send(sd,message,sizeof(message),0);
@@ -129,22 +165,32 @@ int main(int argc, char** argv){
 			printf("Please enter file name\n");
 		}
 		
-		P_message *PUT_REQUEST = put_request(file_put, strlen(file_put));	
 		
-		print_debug(PUT_REQUEST);
-		
-		if((len=send(sd,PUT_REQUEST,sizeof(*PUT_REQUEST),0))<0){
-			printf("Send Error: %s (Errno:%d)\n",strerror(errno),errno);
-			exit(0);
+		if(list_compare(file_put)){
+			P_message *PUT_REQUEST = put_request(file_put, strlen(file_put));
+			print_debug(PUT_REQUEST);
+			if((len=send(sd,PUT_REQUEST,sizeof(*PUT_REQUEST),0))<0){
+				printf("Send Error: %s (Errno:%d)\n",strerror(errno),errno);
+				exit(0);
+			}
+			
+			if((len=recv(sd,PUT_REQUEST,sizeof(*PUT_REQUEST),0))<0){
+				printf("Send Error: %s (Errno:%d)\n",strerror(errno),errno);
+				exit(0);
+			}
+
+			print_debug(PUT_REQUEST);
+			send_file(sd);
+			
+		}else{
+			printf("No such file\n");
+			exit(1);
 		}
-		
-		if((len=recv(sd,PUT_REQUEST,sizeof(*PUT_REQUEST),0))<0){
-			printf("Send Error: %s (Errno:%d)\n",strerror(errno),errno);
-			exit(0);
-		}
+			
 		
 		
-        print_debug(PUT_REQUEST);
+		
+		
 		
 	}else{
 		printf("Only input list/get/put\n");

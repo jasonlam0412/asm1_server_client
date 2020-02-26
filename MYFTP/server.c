@@ -16,51 +16,10 @@
 int list_compare(char *fileRequest);
 void send_list(int client_sd);
 void client_action(int client_sd);
-void send_file(int client_sd, char *filename);
+void send_toClient(int client_sd, char *filename);
+void recv_fromClient(int client_sd);
 
-void send_file(int client_sd, char *file){
-	char filename[60];
-	filename[0] ='\0';
-	int len;
-	strcat(filename,"data/");
-	strcat(filename,file);
-	printf("%s", filename);
-	FILE *fp = fopen(filename,"rb");
-	struct stat *filestat = (struct stat *)malloc(sizeof(struct stat));
-	P_message *FILE_DATA = (P_message *) malloc(sizeof(P_message));
-	FILE_DATA = file_data();
-	char buf[1024];
-	int numbytes;
-	if(fp == NULL){
-		printf("ERROR in open file\n\n");
-		return;
-	}
-	if ( lstat(filename, filestat) < 0){
-		exit(1);
-	}
-	printf("The file size is %lun\n", filestat->st_size);
-	fseek(fp, 0, SEEK_END); 	
-	int file_size = ftell(fp); 	
-	fseek(fp, 0, SEEK_SET); 
-	FILE_DATA->length = file_size;
-	FILE_DATA->length = FILE_DATA->length;
-	strcpy(FILE_DATA->payload,file);
-	if((len=send(client_sd,FILE_DATA,sizeof(*FILE_DATA),0))<0){
-		printf("Send Error: %s (Errno:%d)\n",strerror(errno),errno);
-		exit(0);
-	}
-	
-	while(!feof(fp)){
-		numbytes = fread(buf, sizeof(char), sizeof(buf), fp);
-		printf("fread %d bytes, ", numbytes);
-		numbytes = write(client_sd, buf, numbytes);
-		printf("Sending %d bytesn",numbytes);
-		
-	}
-	printf("\n");
-	free(FILE_DATA);
-	free(filestat);
-	fclose(fp);
+void recv_fromClient(int client_sd){
 	
 }
 
@@ -108,6 +67,52 @@ int main(int argc, char** argv){
 	return 0;
 }
 
+
+void send_toClient(int client_sd, char *file){
+	char filename[60];
+	filename[0] ='\0';
+	int len;
+	strcat(filename,"data/");
+	strcat(filename,file);
+	printf("%s", filename);
+	FILE *fp = fopen(filename,"rb");
+	struct stat *filestat = (struct stat *)malloc(sizeof(struct stat));
+	P_message *FILE_DATA = (P_message *) malloc(sizeof(P_message));
+	FILE_DATA = file_data();
+	char buf[1024];
+	int numbytes;
+	if(fp == NULL){
+		printf("ERROR in open file\n\n");
+		return;
+	}
+	if ( lstat(filename, filestat) < 0){
+		exit(1);
+	}
+	printf("The file size is %lun\n", filestat->st_size);
+	fseek(fp, 0, SEEK_END); 	
+	int file_size = ftell(fp); 	
+	fseek(fp, 0, SEEK_SET); 
+	FILE_DATA->length = file_size;
+	FILE_DATA->length = FILE_DATA->length;
+	strcpy(FILE_DATA->payload,file);
+	if((len=send(client_sd,FILE_DATA,sizeof(*FILE_DATA),0))<0){
+		printf("Send Error: %s (Errno:%d)\n",strerror(errno),errno);
+		exit(0);
+	}
+	
+	while(!feof(fp)){
+		numbytes = fread(buf, sizeof(char), sizeof(buf), fp);
+		printf("fread %d bytes, ", numbytes);
+		numbytes = write(client_sd, buf, numbytes);
+		printf("Sending %d bytesn",numbytes);
+		
+	}
+	printf("\n");
+	free(FILE_DATA);
+	free(filestat);
+	fclose(fp);
+	
+}
 
 int list_compare(char *fileRequest){
 	DIR *folder;
@@ -192,7 +197,7 @@ void client_action(int sd){
 				exit(0);
 			}
 			///////////////ready to send
-			send_file(client_sd, REQUEST->payload);
+			send_toClient(client_sd, REQUEST->payload);
 			
 		}else{
 			printf("No such file\n");
@@ -207,12 +212,15 @@ void client_action(int sd){
 		
 	}else if(REQUEST->type == 0xC1){
 		printf("stype PUT    : %x\n",REQUEST->type);
-		REPLY = list_reply(filename, filelen);
+		REPLY = put_reply();
 		//printf("send type: %x", LIST_REPLY->type);
 		if((len=send(client_sd,REPLY,sizeof(*REPLY),0))<0){
 			printf("Send Error: %s (Errno:%d)\n",strerror(errno),errno);
 			exit(0);
 		}
+		recv_fromClient(client_sd);
+		
+		
 	}else{
 		printf("Fail\n");
 	}
