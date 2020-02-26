@@ -1,0 +1,18 @@
+while(1){
+	unsigned char buff[1024]={0};
+    int nread = fread(buff,1,1024,fp);
+	
+	if(nread > 0){
+		write(connfd, buff, nread);
+    }
+	if (nread < 1024){
+		if (feof(fp)){
+			printf("End of file\n");
+			printf("File transfer completed for id: %d\n",connfd);
+		}
+		if (ferror(fp))
+			printf("Error reading\n");
+		break;
+	}
+	
+}
