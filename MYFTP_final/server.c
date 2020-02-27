@@ -42,12 +42,12 @@ void recv_fromClient(int sd){
 		printf("%d\n", sizeof(buf));
 		printf("read %d bytes, ", numbytes);
 		if(numbytes == 0){
-			//break;
+			break;
 		}
 		numbytes = fwrite(buf, sizeof(char), numbytes, fp);
 		printf("fwrite %d bytesn", numbytes);
 		fileSize -= sizeof(buf);
-	}while(fileSize>0);
+	}while(1);
 	free(FILE_DATA);
 	fclose(fp);
 }

@@ -55,9 +55,9 @@ void send_file(int sd, char *file){
 		printf("fread %d bytes, ", numbytes);
 		numbytes = write(sd, buf, numbytes);
 		printf("Sending %d bytesn",numbytes);
-		
+		printf("\n");
 	}
-	printf("\n");
+	
 	free(FILE_DATA);
 	free(filestat);
 	fclose(fp);
@@ -224,7 +224,7 @@ int main(int argc, char** argv){
 			
 		}else{
 			printf("No such file\n");
-			exit(1);
+			exit(0);
 		}
 			
 		
