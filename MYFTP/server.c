@@ -17,10 +17,39 @@ int list_compare(char *fileRequest);
 void send_list(int client_sd);
 void client_action(int client_sd);
 void send_toClient(int client_sd, char *filename);
-void recv_fromClient(int client_sd);
+void recv_fromClient(int sd);
 
-void recv_fromClient(int client_sd){
-	
+void recv_fromClient(int sd){
+	P_message *FILE_DATA = (P_message *) malloc(sizeof(P_message));
+	FILE_DATA = file_data();
+	int len;
+	if((len=recv(sd,FILE_DATA,sizeof(*FILE_DATA),0))<0){
+		printf("Send Error: %s (Errno:%d)\n",strerror(errno),errno);
+		exit(0);
+	}
+	char filename[60];
+	filename[0] ='\0';
+	strcat(filename,"data/");
+	strcat(filename,FILE_DATA->payload);
+	print_debug(FILE_DATA);
+	FILE *fp = fopen(filename, "wb");
+	int numbytes;
+	char buf[1024];
+	print_debug(FILE_DATA);
+	int fileSize = FILE_DATA->length;
+	do{
+		numbytes = read(sd, buf, sizeof(buf));
+		printf("%d\n", sizeof(buf));
+		printf("read %d bytes, ", numbytes);
+		if(numbytes == 0){
+			//break;
+		}
+		numbytes = fwrite(buf, sizeof(char), numbytes, fp);
+		printf("fwrite %d bytesn", numbytes);
+		fileSize -= sizeof(buf);
+	}while(fileSize>0);
+	free(FILE_DATA);
+	fclose(fp);
 }
 
 int main(int argc, char** argv){
