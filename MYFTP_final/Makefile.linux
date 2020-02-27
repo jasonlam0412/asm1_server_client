@@ -1,0 +1,14 @@
+CC = gcc
+LIB = myftp.c
+
+all: server client
+
+server: server.c ${LIB}
+	${CC} -o server server.c ${LIB}
+
+client: client.c ${LIB}
+	${CC} -o client client.c ${LIB}
+
+clean:
+	rm server
+	rm client	
