@@ -20,7 +20,7 @@ void send_toClient(int client_sd, char *filename);
 void recv_fromClient(int sd);
 
 pthread_t *thread_id;
-int threadNumber = 0;
+int thread_num = 0;
 
 int main(int argc, char** argv){
 	int len;
@@ -28,6 +28,11 @@ int main(int argc, char** argv){
 	thread_id = (pthread_t *) malloc(sizeof(pthread_t));
 	int sd=socket(AF_INET,SOCK_STREAM,0);
     long val = 1;
+	if(argc != 2){
+		printf("Fuck input port number\n");
+		exit(1);
+	}
+	int port_num = atoi(argv[1]);
     if(setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(long)) == -1){
         perror("setsockopt");
         exit(1);
@@ -38,7 +43,7 @@ int main(int argc, char** argv){
 	memset(&server_addr,0,sizeof(server_addr));
 	server_addr.sin_family=AF_INET;
 	server_addr.sin_addr.s_addr=htonl(INADDR_ANY);
-	server_addr.sin_port=htons(PORT);
+	server_addr.sin_port=htons(port_num);
 	if(bind(sd,(struct sockaddr *) &server_addr,sizeof(server_addr))<0){
 		printf("bind error: %s (Errno:%d)\n",strerror(errno),errno);
 		exit(0);
@@ -56,13 +61,13 @@ int main(int argc, char** argv){
 				printf("accept erro: %s (Errno:%d)\n",strerror(errno),errno);
 				exit(0);
 			}
-		pthread_create(&thread_id[threadNumber], NULL, client_action, &client_sd);
-		threadNumber += 1;
-		pthread_t *newPointer = (pthread_t *) realloc(thread_id, sizeof(pthread_t) * (threadNumber + 1));
+		pthread_create(&thread_id[thread_num], NULL, client_action, &client_sd);
+		thread_num += 1;
+		pthread_t *newPointer = (pthread_t *) realloc(thread_id, sizeof(pthread_t) * (thread_num + 1));
 		if(newPointer != NULL){
 			thread_id = newPointer;
 		}
-		for(int i=0; i<threadNumber; i++){
+		for(int i=0; i<thread_num; i++){
 			pthread_join(thread_id[i], NULL);
 		}
 
@@ -270,5 +275,5 @@ void *client_action(void *sd){
 	print_debug(REQUEST);
 	free(REQUEST);
 	free(REPLY);
-	
+	pthread_exit(NULL);
 }
