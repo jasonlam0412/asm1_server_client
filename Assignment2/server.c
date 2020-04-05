@@ -10,7 +10,10 @@
 # include <sys/stat.h> 
 # include <netinet/in.h>
 # include <arpa/inet.h>
+# include <math.h>
 # include "myftp.h"
+# include "/home/timcheng/isa-l/include/erasure_code.h"
+
 # define PORT 12345
 //# define PATH_MAX
 
@@ -19,6 +22,8 @@ void send_list(int client_sd);
 void *client_action(void *client_sd);
 void send_toClient(int client_sd, char *filename);
 void recv_fromClient(int sd);
+void ISA_test();
+uint8_t* encode_data(int n, int k, Stripe *stripe, size_t block_size);
 
 pthread_t *thread_id;
 int thread_num = 0;
@@ -34,37 +39,10 @@ int main(int argc, char** argv){
 		exit(1);
 	}
 
-	FILE *fp;
-	char *line = NULL;
-    size_t length = 0;
-    ssize_t read;
+	
 
-    fp = fopen(argv[1], "r");
-    if (fp == NULL){
-    	printf("File does not exist.\n");
-    	exit(0);
-    }
+	ISA_test();
 
-    int n, k, ID, block_size, port_number;
-
-    int o = 0;
-    int temp_input[5];
-
-    while((read = getline(&line, &length, fp)) != -1){
-    	int temp = atoi(line);
-    	temp_input[o] = temp;
-    	o++;
-    }
-    n = temp_input[0];
-    k = temp_input[1];
-    ID = temp_input[2];
-    block_size = temp_input[3];
-    port_number = temp_input[4];
-    printf("n = %d\n",n);
-    printf("k = %d\n",k);
-    printf("ID = %d\n",ID);
-    printf("block_size = %d\n",block_size);
-    printf("port_number = %d\n",port_number);
 
 
 	int port_num = atoi(argv[1]);
@@ -319,4 +297,101 @@ void *client_action(void *sd){
 	free(REQUEST);
 	free(REPLY);
 	pthread_exit(NULL);
+}
+
+void ISA_test(){
+	FILE *fp;
+	char *line = NULL;
+    size_t length = 0;
+    ssize_t read;
+
+    fp = fopen("serverconfig.txt", "r");
+    if (fp == NULL){
+    	printf("File does not exist.\n");
+    	exit(0);
+    }
+
+    int n, k, ID, block_size, port_number;
+
+    int o = 0;
+    int temp_input[5];
+
+    while((read = getline(&line, &length, fp)) != -1){
+    	int temp = atoi(line);
+    	temp_input[o] = temp;
+    	o++;
+    }
+    n = temp_input[0];
+    k = temp_input[1];
+    ID = temp_input[2];
+    block_size = temp_input[3];
+    port_number = temp_input[4];
+    printf("n = %d\n",n);
+    printf("k = %d\n",k);
+    printf("ID = %d\n",ID);
+    printf("block_size = %d\n",block_size);
+    printf("port_number = %d\n",port_number);
+    fclose(fp);
+
+    char file_name[] = "data/test.txt";
+    fp = fopen(file_name, "r");
+    long int res = 0;
+    if(fp==NULL){
+    	printf("test.txt does not exist\n");
+    }else{
+    	fseek(fp, 0L, SEEK_END);
+    	res = ftell(fp);
+    	
+    	printf("size of the file is : %ld\n",res);
+    }
+    if(res>0){
+ 		int no_of_stripe = (int)ceil((double)res/(block_size * k));
+ 		printf("no_of_stripe = %d\n",no_of_stripe);
+    }
+    
+    Stripe *stripe = malloc(sizeof(Stripe));
+    stripe->encode_matrix = malloc(sizeof(unsigned char) * (n * k));
+    stripe->table = malloc(sizeof(unsigned char) * (32 * k * (n-k)));
+    stripe->blocks = malloc(sizeof(unsigned char **) * n);
+    printf("%d\n",(int)sizeof(stripe->blocks));
+    for (int i = 0; i < n; i++){
+    	 printf("GOOD 2\n");
+    	stripe->blocks[i] = malloc(sizeof(unsigned char *));
+    }
+    
+    fseek(fp, 0, SEEK_SET);
+    char buf[block_size];
+    int x = 0,numbytes;
+
+    while(!feof(fp)){
+		numbytes = fread(buf, sizeof(char), sizeof(buf), fp);
+		printf("fread %d bytes, ", numbytes);
+		stripe->blocks[x]->data = buf;
+		x++;
+	}
+
+    /*uint8_t *encode_matrix = malloc(sizeof(uint8_t) * (n * k));
+	uint8_t *errors_matrix = malloc(sizeof(uint8_t) * (n * k));
+	uint8_t *invert_matrix = malloc(sizeof(uint8_t) * (n * k));
+	uint8_t *table = malloc(sizeof(uint8_t) * (32 * k * (n-k)));*/
+
+	encode_data(n, k, stripe, block_size);
+
+}
+
+uint8_t* encode_data(int n, int k, Stripe *stripe, size_t block_size){
+	printf("GOOD 1\n");
+
+	gf_gen_rs_matrix(stripe->encode_matrix, n, k);
+
+	ec_init_tables(k, n - k, &stripe->encode_matrix[k*k], stripe->table);
+
+	unsigned char** blocks_data = malloc(sizeof(unsigned char **) * n);
+
+	for (int i = 0; i < n ; i++){
+		blocks_data[i] = stripe->blocks[i]->data;
+	}
+	ec_encode_data(block_size, k, n-k, stripe->table, blocks_data, &blocks_data[k]);
+
+	return stripe->encode_matrix;
 }

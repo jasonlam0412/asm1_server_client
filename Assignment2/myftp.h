@@ -6,6 +6,17 @@ typedef struct message_s {
 	
 } __attribute__ ((packed)) P_message;
 
+
+
+typedef struct stripe {
+	int sid;	// stripe id
+	//unsigned char **data_block;	// pointer to the first data block
+	//unsigned char **parity_block;	// pointer to the first parity block
+	unsigned char **blocks;
+	unsigned char *encode_matrix;
+	unsigned char *table;
+} Stripe;
+
 P_message *list_request();
 P_message *list_reply(char *filename, int filelength);
 P_message *get_request(char *filename, int filelength);

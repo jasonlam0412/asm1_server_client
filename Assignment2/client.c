@@ -11,6 +11,7 @@
 # include <netinet/in.h>
 # include <arpa/inet.h>
 # include "myftp.h"
+# include "/home/timcheng/isa-l/include/erasure_code.h"
 # define PORT 12345
 //# define PATH_MAX
 
@@ -177,6 +178,8 @@ int main(int argc, char** argv){
         printf("port is %s\n",port[o]);
         o++;
 	}
+
+
 
 
 	portNum = atoi(argv[2]);

@@ -1,1 +1,7 @@
-fasfd
+It is test.txt
+Testing
+How are you
+Is it great.
+GOOD
+OKOK
+Finished
