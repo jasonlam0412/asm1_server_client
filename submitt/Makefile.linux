@@ -1,0 +1,15 @@
+CC = gcc
+LIB = myftp.c -lm -lisal
+LIBS ?= -lpthread
+
+all: server client
+
+server: server.c ${LIB}
+	${CC} -o myftpserver server.c ${LIB} ${LIBS} -std=gnu99
+
+client: client.c ${LIB}
+	${CC} -o myftpclient client.c ${LIB} -std=gnu99
+
+clean:
+	rm server
+	rm client	
